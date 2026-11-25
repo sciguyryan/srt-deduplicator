@@ -12,11 +12,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu }
-          - { os: ubuntu-22.04, target: x86_64-unknown-linux-musl }
-          - { os: windows-latest, target: x86_64-pc-windows-msvc }
-          - { os: macos-latest, target: aarch64-apple-darwin }
-          - { os: macos-13, target: x86_64-apple-darwin }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, binary: srt-deduplicator }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-musl, binary: srt-deduplicator }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, binary: srt-deduplicator.exe }
+          - { os: macos-latest, target: aarch64-apple-darwin, binary: srt-deduplicator }
+          - { os: macos-13, target: x86_64-apple-darwin, binary: srt-deduplicator }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -28,4 +28,39 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: srt-deduplicator-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/srt-deduplicator*
+          path: target/${{ matrix.target }}/release/${{ matrix.binary }}
+
+  # Tagged pushes only: package each target's binary with the README and
+  # licence into a versioned archive, checksum them and attach everything to
+  # the GitHub Release for the tag.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: srt-deduplicator-*
+          path: artifacts
+      - name: Package release archives
+        run: |
+          mkdir dist
+          for dir in artifacts/srt-deduplicator-*; do
+            target="${dir##*srt-deduplicator-}"
+            name="srt-deduplicator-${GITHUB_REF_NAME}-${target}"
+            mkdir "dist/${name}"
+            cp "${dir}/srt-deduplicator" "dist/${name}/" 2>/dev/null || true
+            cp "${dir}/srt-deduplicator.exe" "dist/${name}/" 2>/dev/null || true
+            cp README.md LICENSE "dist/${name}/"
+            (cd dist && zip -q "${name}.zip" "${name}")
+          done
+          sha256sum dist/*.zip | sed 's|dist/||' > dist/SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS
+          generate_release_notes: true

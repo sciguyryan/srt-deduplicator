@@ -71,6 +71,12 @@ $ cargo build --release
 $ cargo test
 ```
 
+## Releases
+
+Pushing a `v*` tag produces a GitHub Release automatically. Every supported target is built and packaged into one archive containing the binary, this README and the licence, and all archives plus a SHA256 checksum file are attached to the release. Untagged pushes and pull requests build every target as well, with the bare binaries available as workflow artifacts.
+
+The release archives use the naming scheme `srt-deduplicator-<version>-<target>.zip`, where the target is the Rust target triple, for example `x86_64-unknown-linux-musl`.
+
 ## Dependencies
 
 Two libraries are used, both chosen to avoid reinventing the wheel of solved problems: [srtlib](https://crates.io/crates/srtlib) for SRT parsing and formatting, including the timestamp and line-ending quirks covered above, and [clap](https://crates.io/crates/clap) for command line handling. The compaction logic itself is in this repository.

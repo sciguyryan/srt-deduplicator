@@ -12,3 +12,12 @@ srtlib = "0.2"
 
 [dev-dependencies]
 tempfile = "3"
+
+# Release builds favour a small, self-contained binary over compile speed:
+# fat LTO with one codegen unit, and debug symbols stripped from the shipped
+# executable. Runtime speed is not a meaningful goal for this tool, so the
+# default optimisation level is left alone.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
