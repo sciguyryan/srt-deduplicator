@@ -2,8 +2,9 @@
 name = "srt-deduplicator"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
-description = "Compacts consecutive runs of identical subtitle text in SubRip files."
+description = "Compacts consecutive runs of identical subtitle text in SRT files."
+license-file = "LICENSE"
+publish = false
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
