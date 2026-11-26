@@ -23,13 +23,13 @@ jobs:
           - { os: macos-latest, target: x86_64-apple-darwin, binary: srt-deduplicator }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --target ${{ matrix.target }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: srt-deduplicator-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/${{ matrix.binary }}
@@ -44,8 +44,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: srt-deduplicator-*
           path: artifacts
@@ -56,13 +56,14 @@ jobs:
             target="${dir##*srt-deduplicator-}"
             name="srt-deduplicator-${GITHUB_REF_NAME}-${target}"
             mkdir "dist/${name}"
-            cp "${dir}/srt-deduplicator" "dist/${name}/" 2>/dev/null || true
-            cp "${dir}/srt-deduplicator.exe" "dist/${name}/" 2>/dev/null || true
+            cp "${dir}/"srt-deduplicator* "dist/${name}/"
             cp README.md LICENSE "dist/${name}/"
-            (cd dist && zip -q "${name}.zip" "${name}")
+            # -r is required: without it zip stores only the directory entry
+            # and the archives come out empty.
+            (cd dist && zip -q -r "${name}.zip" "${name}")
           done
           sha256sum dist/*.zip | sed 's|dist/||' > dist/SHA256SUMS
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/*.zip
