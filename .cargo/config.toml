@@ -1,0 +1,7 @@
+# Cross-compiling the Intel macOS target on an Apple Silicon machine needs the
+# linker told which architecture to emit; building natively on an Intel Mac
+# ignores the difference. rustflags is an array here because the RUSTFLAGS
+# environment variable splits on spaces and cannot pass `-arch x86_64` as one
+# linker argument.
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-args=-arch x86_64"]
