@@ -12,15 +12,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, binary: srt-deduplicator }
-          - { os: ubuntu-22.04, target: x86_64-unknown-linux-musl, binary: srt-deduplicator }
-          - { os: windows-latest, target: x86_64-pc-windows-msvc, binary: srt-deduplicator.exe }
-          - { os: macos-latest, target: aarch64-apple-darwin, binary: srt-deduplicator }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, binary: subtitle-deduplicator }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-musl, binary: subtitle-deduplicator }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, binary: subtitle-deduplicator.exe }
+          - { os: macos-latest, target: aarch64-apple-darwin, binary: subtitle-deduplicator }
           # The deprecated macos-13 Intel runners queue for many hours, so the
           # Intel target is cross-compiled on Apple Silicon instead. All
           # dependencies are pure Rust, so only the linker needs pointing at
           # the x86_64 architecture, which .cargo/config.toml does.
-          - { os: macos-latest, target: x86_64-apple-darwin, binary: srt-deduplicator }
+          - { os: macos-latest, target: x86_64-apple-darwin, binary: subtitle-deduplicator }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -31,7 +31,7 @@ jobs:
       - run: cargo build --release --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v6
         with:
-          name: srt-deduplicator-${{ matrix.target }}
+          name: subtitle-deduplicator-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/${{ matrix.binary }}
 
   # Tagged pushes only: package each target's binary with the README and
@@ -47,16 +47,16 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
-          pattern: srt-deduplicator-*
+          pattern: subtitle-deduplicator-*
           path: artifacts
       - name: Package release archives
         run: |
           mkdir dist
-          for dir in artifacts/srt-deduplicator-*; do
-            target="${dir##*srt-deduplicator-}"
-            name="srt-deduplicator-${GITHUB_REF_NAME}-${target}"
+          for dir in artifacts/subtitle-deduplicator-*; do
+            target="${dir##*subtitle-deduplicator-}"
+            name="subtitle-deduplicator-${GITHUB_REF_NAME}-${target}"
             mkdir "dist/${name}"
-            cp "${dir}/"srt-deduplicator* "dist/${name}/"
+            cp "${dir}/"subtitle-deduplicator* "dist/${name}/"
             cp README.md LICENSE "dist/${name}/"
             # -r is required: without it zip stores only the directory entry
             # and the archives come out empty.

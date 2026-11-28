@@ -1,8 +1,8 @@
 [package]
-name = "srt-deduplicator"
-version = "0.1.0"
+name = "subtitle-deduplicator"
+version = "0.2.0"
 edition = "2024"
-description = "Compacts consecutive runs of identical subtitle text in SRT files."
+description = "Compacts consecutive runs of identical subtitle text in ASS and SRT files."
 license-file = "LICENSE"
 publish = false
 

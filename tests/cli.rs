@@ -5,7 +5,7 @@ use std::process::Command;
 use tempfile::TempDir;
 
 /// The compiled binary, provided by cargo for integration tests.
-const BINARY: &str = env!("CARGO_BIN_EXE_srt-deduplicator");
+const BINARY: &str = env!("CARGO_BIN_EXE_subtitle-deduplicator");
 
 /// Writes `content` to a new file named `name` inside `dir`.
 fn write_input(dir: &TempDir, name: &str, content: &str) -> std::path::PathBuf {
@@ -120,4 +120,44 @@ fn reports_a_missing_input_file_as_an_error() {
     let missing = dir.path().join("absent.srt");
 
     expect_failure(&[missing.to_str().expect("UTF-8 path")]);
+}
+
+const ASS_INPUT: &str = "[Script Info]\nScriptType: v4.00+\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello\nDialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,Hello\n";
+
+#[test]
+fn ass_output_matches_between_stdout_and_file_and_retains_input() {
+    let dir = TempDir::new().unwrap();
+    let input = write_input(&dir, "input.ASS", ASS_INPUT);
+    let output = dir.path().join("output.ass");
+    let expected = ASS_INPUT
+        .replace("0:00:01.00,0:00:02.00", "0:00:01.00,0:00:03.00")
+        .replace(
+            "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,Hello\n",
+            "",
+        );
+    assert_eq!(run(&[input.to_str().unwrap()]), (0, expected.clone()));
+    assert_eq!(
+        run(&[input.to_str().unwrap(), "-o", output.to_str().unwrap()]),
+        (0, String::new())
+    );
+    assert_eq!(std::fs::read_to_string(output).unwrap(), expected);
+    assert_eq!(std::fs::read_to_string(input).unwrap(), ASS_INPUT);
+}
+
+#[test]
+fn malformed_ass_does_not_overwrite_existing_output() {
+    let dir = TempDir::new().unwrap();
+    let input = write_input(&dir, "input.ass", "[Events]\nDialogue: bad\n");
+    let output = write_input(&dir, "output.ass", "keep me");
+    let error = expect_failure(&[input.to_str().unwrap(), "-o", output.to_str().unwrap()]);
+    assert!(error.contains("valid ASS file: line 2:"));
+    assert_eq!(std::fs::read_to_string(output).unwrap(), "keep me");
+}
+
+#[test]
+fn invalid_utf8_ass_is_rejected() {
+    let dir = TempDir::new().unwrap();
+    let input = dir.path().join("input.ass");
+    std::fs::write(&input, [0xff, 0xfe]).unwrap();
+    expect_failure(&[input.to_str().unwrap()]);
 }

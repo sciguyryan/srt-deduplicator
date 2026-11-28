@@ -72,7 +72,7 @@ pub fn compact(cues: Vec<Subtitle>) -> (Vec<Subtitle>, Stats) {
 /// breaks, collapse to single spaces. Case stays significant: "Hello" and
 /// "hello" are different lines more often than not, and changing that would
 /// be a policy decision the caller did not ask for.
-fn normalise(text: &str) -> String {
+pub(crate) fn normalise(text: &str) -> String {
     text.split_whitespace().collect::<Vec<&str>>().join(" ")
 }
 
